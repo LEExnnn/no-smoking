@@ -1,0 +1,28 @@
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Mac
+.AppleDouble
+.LSOverride
+
+# Python / FastAPI
+server/venv/
+server/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+
+# Node
+node_modules/
+npm-debug.log
+
+# Logs
+*.log
+
+# Docker
+docker-compose.override.yml

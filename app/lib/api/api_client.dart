@@ -1,0 +1,58 @@
+import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class ApiClient {
+  static final ApiClient _instance = ApiClient._internal();
+  late Dio dio;
+  static const String _deviceIdKey = 'device_id';
+
+  factory ApiClient() {
+    return _instance;
+  }
+
+  ApiClient._internal() {
+    // 假设本地后端运行在 10.0.2.2 (Android 模拟器访问宿主机的 IP) 或者 127.0.0.1
+    // 在真实手机上需要改成电脑的局域网 IP
+    dio = Dio(BaseOptions(
+      baseUrl: 'http://10.0.2.2:8000/api/v1',
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 15),
+    ));
+
+    dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) async {
+        final prefs = await SharedPreferences.getInstance();
+        String? deviceId = prefs.getString(_deviceIdKey);
+        
+        // 如果没有设备ID，生成一个临时的（真实环境中应获取真实设备ID或引导注册登录）
+        if (deviceId == null) {
+          deviceId = 'device_${DateTime.now().millisecondsSinceEpoch}';
+          await prefs.setString(_deviceIdKey, deviceId);
+        }
+        
+        options.queryParameters['device_id'] = deviceId;
+        return handler.next(options);
+      },
+    ));
+  }
+
+  /// 提交问卷并获取画像
+  Future<Map<String, dynamic>> submitQuestionnaire(Map<String, dynamic> answers) async {
+    try {
+      final response = await dio.post('/profile/submit', data: answers);
+      return response.data;
+    } catch (e) {
+      throw Exception('网络请求失败: $e');
+    }
+  }
+
+  /// 获取个人画像
+  Future<Map<String, dynamic>> getMyProfile() async {
+    try {
+      final response = await dio.get('/profile/me');
+      return response.data;
+    } catch (e) {
+      throw Exception('获取画像失败: $e');
+    }
+  }
+}
