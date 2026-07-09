@@ -300,7 +300,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen>
       ),
       body: PageView.builder(
         controller: _pageController,
-        physics: const NeverScrollableScrollPhysics(),
+        physics: const BouncingScrollPhysics(),
         onPageChanged: (page) => setState(() => _currentPage = page),
         itemCount: _questions.length,
         itemBuilder: (context, index) {

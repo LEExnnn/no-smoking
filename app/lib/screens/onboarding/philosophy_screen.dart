@@ -39,11 +39,11 @@ class _PhilosophyScreenState extends State<PhilosophyScreen>
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXl),
           child: Column(
             children: [
-              const Spacer(flex: 1),
+              const SizedBox(height: AppTheme.spacingXxl),
 
               // ─── 核心文案 ───────────────────────────
               _buildAnimatedText(
@@ -151,9 +151,9 @@ class _PhilosophyScreenState extends State<PhilosophyScreen>
                 ),
               ),
 
-              const Spacer(flex: 2),
+              const SizedBox(height: AppTheme.spacingXxl),
 
-              // ─── 按钮 ─────────────────────────────
+              // ─── 行动按钮 ─────────────────────────────
               _buildAnimatedText(
                 delay: 0.7,
                 child: SizedBox(

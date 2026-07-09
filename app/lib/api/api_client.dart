@@ -11,9 +11,8 @@ class ApiClient {
   }
 
   ApiClient._internal() {
-    // 假设本地后端运行在 10.0.2.2 (Android 模拟器访问宿主机的 IP) 或者 127.0.0.1
-    // 在真实手机上需要改成电脑的局域网 IP
     dio = Dio(BaseOptions(
+      // Default to 10.0.2.2, interceptor will override this if custom IP is set
       baseUrl: 'http://10.0.2.2:8000/api/v1',
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 15),
@@ -22,6 +21,12 @@ class ApiClient {
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         final prefs = await SharedPreferences.getInstance();
+        
+        // 动态替换 Base URL
+        String? customIp = prefs.getString('custom_server_ip');
+        if (customIp != null && customIp.isNotEmpty) {
+          options.baseUrl = 'http://$customIp:8000/api/v1';
+        }
         String? deviceId = prefs.getString(_deviceIdKey);
         
         // 如果没有设备ID，生成一个临时的（真实环境中应获取真实设备ID或引导注册登录）

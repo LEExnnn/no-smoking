@@ -3,6 +3,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/app_theme.dart';
 import '../../router/app_routes.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// 欢迎页
 ///
@@ -113,25 +114,28 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 // ─── 标题 ─────────────────────────────
                 SlideTransition(
                   position: _titleSlide,
-                  child: Column(
-                    children: [
-                      Text(
-                        '这个APP',
-                        style: AppTypography.displayLarge.copyWith(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w300,
+                  child: GestureDetector(
+                    onLongPress: () => _showSettingsDialog(context),
+                    child: Column(
+                      children: [
+                        Text(
+                          '这个APP',
+                          style: AppTypography.displayLarge.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w300,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                      Text(
-                        '能让你戒烟',
-                        style: AppTypography.displayLarge.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w700,
+                        Text(
+                          '能让你戒烟',
+                          style: AppTypography.displayLarge.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
 
@@ -305,6 +309,49 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           ),
         ],
       ),
+    );
+  }
+
+  void _showSettingsDialog(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    String currentIp = prefs.getString('custom_server_ip') ?? '10.0.2.2';
+    final TextEditingController controller = TextEditingController(text: currentIp);
+
+    if (!context.mounted) return;
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('高级设置 (仅测试)'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              labelText: '后端服务器 IP 地址',
+              hintText: '例如：192.168.1.100',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('取消'),
+            ),
+            TextButton(
+              onPressed: () async {
+                await prefs.setString('custom_server_ip', controller.text.trim());
+                if (dialogContext.mounted) {
+                  Navigator.pop(dialogContext);
+                }
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('服务器 IP 已保存，重启 App 即可生效。')),
+                  );
+                }
+              },
+              child: const Text('保存'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
