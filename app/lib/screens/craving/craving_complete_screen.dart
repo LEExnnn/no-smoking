@@ -140,13 +140,26 @@ class _CravingCompleteScreenState extends State<CravingCompleteScreen>
                     ),
                     child: Column(
                       children: [
+                        Text(
+                          '🎉 成功抢救寿命',
+                          style: AppTypography.labelLarge.copyWith(color: AppColors.primary),
+                        ),
+                        const SizedBox(height: AppTheme.spacingMd),
+                        const Text(
+                          '+11 分钟',
+                          style: TextStyle(
+                            fontSize: 48,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.primaryDark,
+                            height: 1.0,
+                          ),
+                        ),
+                        const SizedBox(height: AppTheme.spacingLg),
+                        const Divider(height: 1, color: AppColors.borderLight),
+                        const SizedBox(height: AppTheme.spacingLg),
                         _buildRewardRow('🛡️', '累计击退烟瘾', '$_cravingsDefeated 次'),
-                        const Divider(height: 24),
-                        _buildRewardRow('🚭', '本次少抽', '1 支'),
-                        const Divider(height: 24),
-                        _buildRewardRow('👶', '宝宝无烟账户', '+1'),
-                        const Divider(height: 24),
-                        _buildRewardRow('🏠', '回家少一次烟味风险', '✓'),
+                        const SizedBox(height: AppTheme.spacingSm),
+                        _buildRewardRow('🏠', '今天没有把烟味带回家', '✓'),
                       ],
                     ),
                   ),

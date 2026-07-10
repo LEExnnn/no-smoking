@@ -11,6 +11,7 @@ import '../screens/craving/craving_trigger_screen.dart';
 import '../screens/craving/craving_rescue_screen.dart';
 import '../screens/craving/craving_timer_screen.dart';
 import '../screens/craving/craving_complete_screen.dart';
+import '../screens/craving/slip_up_comfort_screen.dart';
 
 /// 路由名称常量
 class AppRoutes {
@@ -32,6 +33,7 @@ class AppRoutes {
   static const String cravingRescue = '/craving/rescue';
   static const String cravingTimer = '/craving/timer';
   static const String cravingComplete = '/craving/complete';
+  static const String slipUpComfort = '/craving/slip_up';
 
   // ─── 路由表 ──────────────────────────────────────────
   static Map<String, WidgetBuilder> get routes => {
@@ -46,6 +48,7 @@ class AppRoutes {
         cravingRescue: (context) => const CravingRescueScreen(),
         cravingTimer: (context) => const CravingTimerScreen(),
         cravingComplete: (context) => const CravingCompleteScreen(),
+        slipUpComfort: (context) => const SlipUpComfortScreen(),
       };
 
   /// 初始路由（根据用户状态决定）

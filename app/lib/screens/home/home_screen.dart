@@ -70,13 +70,12 @@ class _HomeScreenState extends State<HomeScreen> {
     double savedCigs = (daysElapsed * cigsPerDay) - slipUps;
     if (savedCigs < 0) savedCigs = 0;
     
-    // 核心修改：被动滚雪球（基于时间） + 主动奖励（每次击退奖励1根烟的钱）
+    // 核心修改：省钱逻辑回归严格的数学时间（不能凭空产生多余的钱）
     double passiveMoney = savedCigs * (packPrice / 20.0);
-    double activeBonus = defeated * (packPrice / 20.0);
     
     setState(() {
       _cravingsDefeated = defeated;
-      _moneySaved = passiveMoney + activeBonus;
+      _moneySaved = passiveMoney;
     });
   }
 
@@ -190,12 +189,10 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // ─── 底部常驻"我想抽了"按钮 ────────────────
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: _buildCravingButton(context),
+            // ─── 底部常驻操作区 ────────────────
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: _buildActionArea(context),
             ),
           ],
         ),
@@ -343,8 +340,18 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// 击退烟瘾卡
+  /// 击退烟瘾卡 (抢救寿命)
   Widget _buildCravingCard() {
+    int regainedMinutes = _cravingsDefeated * 11;
+    String regainedText;
+    if (regainedMinutes < 60) {
+      regainedText = '$regainedMinutes 分钟';
+    } else {
+      int hours = regainedMinutes ~/ 60;
+      int mins = regainedMinutes % 60;
+      regainedText = '$hours 小时 $mins 分';
+    }
+    
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingLg),
       decoration: BoxDecoration(
@@ -359,7 +366,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const Text('🛡️', style: TextStyle(fontSize: 18)),
               const SizedBox(width: 6),
               Text(
-                '击退烟瘾',
+                '抢救寿命 ($_cravingsDefeated 次)',
                 style: AppTypography.labelSmall.copyWith(
                   color: AppColors.primary,
                 ),
@@ -368,14 +375,15 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            '$_cravingsDefeated 次',
+            regainedText,
             style: AppTypography.numberMedium.copyWith(
               color: AppColors.primaryDark,
+              fontSize: 22,
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            '每一次都让它更弱',
+            '每一次抵抗，都为你赢回时间',
             style: AppTypography.labelSmall.copyWith(
               color: AppColors.textTertiary,
               fontSize: 11,
@@ -510,8 +518,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// 底部常驻"我想抽了"按钮
-  Widget _buildCravingButton(BuildContext context) {
+  /// 底部常驻按钮区
+  Widget _buildActionArea(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingXl),
       decoration: BoxDecoration(
@@ -525,20 +533,36 @@ class _HomeScreenState extends State<HomeScreen> {
           stops: const [0.0, 0.3],
         ),
       ),
-      child: ElevatedButton(
-        onPressed: () {
-          Navigator.pushNamed(context, AppRoutes.cravingTrigger);
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.danger,
-          foregroundColor: Colors.white,
-          minimumSize: const Size(double.infinity, 56),
-          elevation: 4,
-        ),
-        child: const Text(
-          '不行，我想抽了',
-          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-        ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextButton(
+            onPressed: () {
+              Navigator.pushNamed(context, AppRoutes.slipUpComfort);
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.textTertiary,
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            ),
+            child: const Text('没忍住，我已经抽了一根', style: TextStyle(decoration: TextDecoration.underline, fontSize: 13)),
+          ),
+          const SizedBox(height: 8),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pushNamed(context, AppRoutes.cravingTrigger);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(double.infinity, 56),
+              elevation: 4,
+            ),
+            child: const Text(
+              '不行，我想抽了',
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
       ),
     );
   }
