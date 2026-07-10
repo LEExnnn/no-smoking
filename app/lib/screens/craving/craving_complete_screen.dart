@@ -3,6 +3,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/app_theme.dart';
 import '../../router/app_routes.dart';
+import '../../api/api_client.dart';
 
 /// 烟瘾急救 - 完成反馈页
 ///
@@ -18,6 +19,11 @@ class CravingCompleteScreen extends StatefulWidget {
 class _CravingCompleteScreenState extends State<CravingCompleteScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
+  
+  bool _isResolving = true;
+  int _cravingsDefeated = 1;
+  double _moneySaved = 2.0;
+  bool _resolved = false;
 
   @override
   void initState() {
@@ -29,6 +35,43 @@ class _CravingCompleteScreenState extends State<CravingCompleteScreen>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_resolved) {
+      _resolved = true;
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map) {
+        final eventId = args['event_id'] as String?;
+        final outcome = args['outcome'] as String? ?? 'resisted';
+        if (eventId != null && eventId != 'offline_event') {
+          _resolveEvent(eventId, outcome);
+        } else {
+          setState(() => _isResolving = false);
+        }
+      } else {
+        setState(() => _isResolving = false);
+      }
+    }
+  }
+
+  void _resolveEvent(String eventId, String outcome) async {
+    try {
+      final res = await ApiClient().resolveCraving(eventId, outcome);
+      if (mounted) {
+        setState(() {
+          _cravingsDefeated = res['cravings_defeated'] ?? 1;
+          _moneySaved = (res['money_saved'] ?? 2.0).toDouble();
+          _isResolving = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isResolving = false);
+      }
+    }
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
@@ -36,6 +79,13 @@ class _CravingCompleteScreenState extends State<CravingCompleteScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (_isResolving) {
+      return const Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      );
+    }
+    
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -88,11 +138,11 @@ class _CravingCompleteScreenState extends State<CravingCompleteScreen>
                   ),
                   child: Column(
                     children: [
-                      _buildRewardRow('🛡️', '击退烟瘾', '+1'),
+                      _buildRewardRow('🛡️', '累计击退烟瘾', '$_cravingsDefeated 次'),
                       const Divider(height: 24),
-                      _buildRewardRow('🚭', '少抽', '1 支'),
+                      _buildRewardRow('🚭', '本次少抽', '1 支'),
                       const Divider(height: 24),
-                      _buildRewardRow('💰', '省下约', '¥2'),
+                      _buildRewardRow('💰', '累计省下约', '¥${_moneySaved.toStringAsFixed(1)}'),
                       const Divider(height: 24),
                       _buildRewardRow('👶', '宝宝无烟账户', '+1'),
                       const Divider(height: 24),

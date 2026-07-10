@@ -55,11 +55,22 @@ class _CravingTimerScreenState extends State<CravingTimerScreen>
     _startTimer();
   }
 
+  String? _eventId;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is int && args != _totalSeconds) {
+    if (args is Map) {
+      _eventId = args['event_id'] as String?;
+      final dur = args['duration'] as int?;
+      if (dur != null && dur != _totalSeconds) {
+        _totalSeconds = dur;
+        _remainingSeconds = _totalSeconds;
+        _smokeController.duration = Duration(seconds: _totalSeconds);
+        _smokeController.forward(from: 0);
+      }
+    } else if (args is int && args != _totalSeconds) {
       _totalSeconds = args;
       _remainingSeconds = _totalSeconds;
       _smokeController.duration = Duration(seconds: _totalSeconds);
@@ -86,7 +97,14 @@ class _CravingTimerScreenState extends State<CravingTimerScreen>
   }
 
   void _onCompleted() {
-    Navigator.pushReplacementNamed(context, AppRoutes.cravingComplete);
+    Navigator.pushReplacementNamed(
+      context, 
+      AppRoutes.cravingComplete,
+      arguments: {
+        'event_id': _eventId,
+        'outcome': 'resisted'
+      }
+    );
   }
 
   @override

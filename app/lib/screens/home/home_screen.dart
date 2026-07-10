@@ -4,6 +4,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/app_theme.dart';
 import '../../router/app_routes.dart';
+import '../../api/api_client.dart';
 
 /// 个性化首页
 ///
@@ -23,13 +24,40 @@ class _HomeScreenState extends State<HomeScreen> {
   int _cravingsDefeated = 7;
   double _moneySaved = 48.0;
 
+  bool _isLoading = true;
+  String _error = '';
+
   @override
   void initState() {
     super.initState();
+    _fetchDashboard();
     // 实时更新自由时间
     _timer = Timer.periodic(const Duration(seconds: 60), (_) {
       if (mounted) setState(() {});
     });
+  }
+
+  Future<void> _fetchDashboard() async {
+    try {
+      final data = await ApiClient().getDashboard();
+      if (mounted) {
+        setState(() {
+          if (data['quit_date'] != null) {
+            _quitDate = DateTime.parse(data['quit_date']);
+          }
+          _cravingsDefeated = data['cravings_defeated'] ?? 0;
+          _moneySaved = (data['money_saved'] ?? 0.0).toDouble();
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -42,6 +70,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      );
+    }
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(

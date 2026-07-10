@@ -3,6 +3,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/app_theme.dart';
 import '../../router/app_routes.dart';
+import '../../api/api_client.dart';
 
 /// 烟瘾急救 - AI 短句接管
 ///
@@ -20,14 +21,11 @@ class _CravingRescueScreenState extends State<CravingRescueScreen>
   late AnimationController _controller;
   int _currentMessage = 0;
 
-  // 模拟 AI 输出 - 后续对接 DeepSeek API
-  final _messages = [
-    '你现在不是需要烟。',
-    '你是想从工作状态里出来。',
-    '但"出去"对你来说就是抽烟动线。',
-    '这次别下楼。',
-    '我陪你过 90 秒。',
-  ];
+  List<String> _messages = [];
+  bool _isLoading = true;
+  String _error = '';
+  String? _eventId;
+  String? _triggerKey;
 
   @override
   void initState() {
@@ -36,12 +34,46 @@ class _CravingRescueScreenState extends State<CravingRescueScreen>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    _showMessages();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_triggerKey == null) {
+      _triggerKey = ModalRoute.of(context)?.settings.arguments as String? ?? 'unknown';
+      _fetchMessages();
+    }
+  }
+
+  void _fetchMessages() async {
+    try {
+      final res = await ApiClient().triggerCravingSOS(_triggerKey!);
+      if (mounted) {
+        setState(() {
+          _messages = List<String>.from(res['messages'] ?? []);
+          if (_messages.isEmpty) {
+            _messages = ['深呼吸，承认这份渴望。', '这股冲动只要 90 秒就会过去。', '跟我一起，闭上眼睛。'];
+          }
+          _eventId = res['event_id'];
+          _isLoading = false;
+        });
+        _showMessages();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _messages = ['没关系，深呼吸。', '网络好像有点慢，但冲动马上就会过去。', '我陪你度过接下来的 90 秒。'];
+          _eventId = 'offline_event';
+          _isLoading = false;
+        });
+        _showMessages();
+      }
+    }
   }
 
   void _showMessages() async {
     for (int i = 0; i < _messages.length; i++) {
-      await Future.delayed(Duration(milliseconds: i == 0 ? 500 : 1200));
+      await Future.delayed(Duration(milliseconds: i == 0 ? 500 : 1800));
       if (mounted) {
         setState(() => _currentMessage = i);
         _controller.forward(from: 0);
@@ -57,6 +89,22 @@ class _CravingRescueScreenState extends State<CravingRescueScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CircularProgressIndicator(color: AppColors.primary),
+              const SizedBox(height: 16),
+              Text('AI 戒烟教练正在赶来...', style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary)),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -81,10 +129,10 @@ class _CravingRescueScreenState extends State<CravingRescueScreen>
                   height: 56,
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pushNamed(
+                      Navigator.pushReplacementNamed(
                         context,
                         AppRoutes.cravingTimer,
-                        arguments: 90,
+                        arguments: {'event_id': _eventId, 'duration': 90},
                       );
                     },
                     child: const Text(

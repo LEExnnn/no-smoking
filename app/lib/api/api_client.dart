@@ -60,4 +60,37 @@ class ApiClient {
       throw Exception('获取画像失败: $e');
     }
   }
+
+  Future<Map<String, dynamic>> getDashboard() async {
+    try {
+      final response = await dio.get('/dashboard/me');
+      return response.data;
+    } catch (e) {
+      throw Exception('网络请求失败: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> triggerCravingSOS(String triggerType) async {
+    try {
+      final response = await dio.post('/craving/sos', data: {
+        'trigger_type': triggerType,
+        'intensity': 5,
+      });
+      return response.data;
+    } catch (e) {
+      throw Exception('急救请求失败: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> resolveCraving(String eventId, String outcome) async {
+    try {
+      final response = await dio.post('/craving/resolve', data: {
+        'event_id': eventId,
+        'outcome': outcome,
+      });
+      return response.data;
+    } catch (e) {
+      throw Exception('上报结果失败: $e');
+    }
+  }
 }
