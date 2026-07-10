@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/storage_service.dart';
 import '../screens/onboarding/welcome_screen.dart';
 import '../screens/onboarding/philosophy_screen.dart';
 import '../screens/onboarding/questionnaire_screen.dart';
@@ -48,5 +49,11 @@ class AppRoutes {
       };
 
   /// 初始路由（根据用户状态决定）
-  static String get initialRoute => welcome;
+  static String get initialRoute {
+    final profile = StorageService().getProfile();
+    if (profile != null) {
+      return home;
+    }
+    return welcome;
+  }
 }
