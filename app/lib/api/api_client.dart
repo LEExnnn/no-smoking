@@ -12,8 +12,8 @@ class ApiClient {
 
   ApiClient._internal() {
     dio = Dio(BaseOptions(
-      // Default to Mac's local LAN IP, interceptor will override this if custom IP is set
-      baseUrl: 'http://10.0.16.200:8000/api/v1',
+      // Using pinggy.io tunnel for public testing (expires in 60 mins)
+      baseUrl: 'https://jsuxe-38-190-176-186.free.pinggy.net/api/v1',
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 15),
     ));
