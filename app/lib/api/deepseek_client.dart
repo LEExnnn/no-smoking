@@ -1,6 +1,12 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 
+class CravingMessageResponse {
+  final List<String> messages;
+  final bool isOnline;
+  CravingMessageResponse(this.messages, this.isOnline);
+}
+
 class DeepSeekClient {
   static final DeepSeekClient _instance = DeepSeekClient._internal();
   late Dio dio;
@@ -23,7 +29,7 @@ class DeepSeekClient {
     ));
   }
 
-  Future<List<String>> generateCravingMessages(String triggerType, Map<String, dynamic>? profile) async {
+  Future<CravingMessageResponse> generateCravingMessages(String triggerType, Map<String, dynamic>? profile) async {
     try {
       final prompt = '''
       用户因为 "$triggerType" 场景想抽烟了。
@@ -50,16 +56,16 @@ class DeepSeekClient {
       while(lines.length < 5) {
         lines.add("深呼吸，你会熬过去的");
       }
-      return lines.take(5).toList();
+      return CravingMessageResponse(lines.take(5).toList(), true);
     } catch (e) {
       // 离线兜底逻辑
-      return [
+      return CravingMessageResponse([
         '想抽烟是很正常的感受',
         '但这只是大脑在向你索要多巴胺',
         '再坚持一下，冲动很快就会过去',
         '想想你最初决定戒烟的理由',
         '你已经做得很好了，不要轻易放弃'
-      ];
+      ], false);
     }
   }
 }

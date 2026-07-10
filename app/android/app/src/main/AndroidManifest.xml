@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="quit_smoking_app"
+        android:label="这个APP能让你戒烟"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

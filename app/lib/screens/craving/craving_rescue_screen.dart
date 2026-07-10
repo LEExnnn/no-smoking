@@ -20,7 +20,8 @@ class CravingRescueScreen extends StatefulWidget {
 class _CravingRescueScreenState extends State<CravingRescueScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  int _currentMessage = 0;
+  bool _isOnline = true;
+  int _currentMessage = -1;
 
   List<String> _messages = [];
   bool _isLoading = true;
@@ -49,13 +50,15 @@ class _CravingRescueScreenState extends State<CravingRescueScreen>
   void _fetchMessages() async {
     try {
       final profile = StorageService().getProfile();
-      final msgs = await DeepSeekClient().generateCravingMessages(_triggerKey!, profile);
+      final response = await DeepSeekClient().generateCravingMessages(_triggerKey!, profile);
       
       if (mounted) {
         setState(() {
-          _messages = msgs;
+          _messages = response.messages;
+          _isOnline = response.isOnline;
           if (_messages.isEmpty) {
             _messages = ['深呼吸，承认这份渴望。', '这股冲动只要 90 秒就会过去。', '跟我一起，闭上眼睛。'];
+            _isOnline = false;
           }
           _eventId = 'local_event_${DateTime.now().millisecondsSinceEpoch}';
           _isLoading = false;
@@ -66,6 +69,7 @@ class _CravingRescueScreenState extends State<CravingRescueScreen>
       if (mounted) {
         setState(() {
           _messages = ['没关系，深呼吸。', '网络好像有点慢，但冲动马上就会过去。', '我陪你度过接下来的 90 秒。'];
+          _isOnline = false;
           _eventId = 'offline_event';
           _isLoading = false;
         });
@@ -115,6 +119,38 @@ class _CravingRescueScreenState extends State<CravingRescueScreen>
           padding: const EdgeInsets.all(AppTheme.spacingXl),
           child: Column(
             children: [
+              // DeepSeek 状态角标
+              Align(
+                alignment: Alignment.topRight,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _isOnline ? AppColors.primarySurface : AppColors.surfaceVariant,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _isOnline ? AppColors.success : AppColors.textTertiary,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        _isOnline ? 'DeepSeek AI 正在连线' : '离线安抚模式',
+                        style: AppTypography.labelSmall.copyWith(
+                          color: _isOnline ? AppColors.primaryDark : AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
               const Spacer(flex: 1),
 
               // AI 消息列表
