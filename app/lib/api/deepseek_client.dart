@@ -7,7 +7,7 @@ class DeepSeekClient {
   
   // Note: For a production app, the API key should not be hardcoded here.
   // This is acceptable for a local-first standalone personal app.
-  static const String _apiKey = 'sk-eb77ebc1f06141a291e52dbb064c58be';
+  static const String _apiKey = 'sk-286c127610ff4b3f80a8d4d34ed1df2e';
   static const String _baseUrl = 'https://api.deepseek.com/chat/completions';
 
   factory DeepSeekClient() => _instance;
