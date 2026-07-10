@@ -4,6 +4,8 @@ import '../../theme/app_typography.dart';
 import '../../theme/app_theme.dart';
 import '../../router/app_routes.dart';
 import '../../api/api_client.dart';
+import '../../services/profile_engine.dart';
+import '../../services/storage_service.dart';
 
 /// 画像生成动画页
 ///
@@ -54,17 +56,20 @@ class _ProfileGeneratingScreenState extends State<ProfileGeneratingScreen>
     _startFakeSteps();
     
     try {
-      final result = await ApiClient().submitQuestionnaire(answers);
+      // 1. 本地计算画像
+      final result = ProfileEngine.generateProfile(answers);
+      
+      // 2. 本地持久化保存
+      await StorageService().saveProfile(result);
       
       // 等待至少让动画播完前面几步
-      await Future.delayed(const Duration(milliseconds: 1500));
+      await Future.delayed(const Duration(milliseconds: 2500));
       
       if (mounted) {
         Navigator.pushReplacementNamed(context, AppRoutes.profileReport,
             arguments: result);
       }
     } catch (e) {
-      // 失败时，可以在这里给出提示，或进入降级逻辑
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('分析失败: $e，请稍后重试。')),

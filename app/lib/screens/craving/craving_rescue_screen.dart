@@ -3,7 +3,8 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/app_theme.dart';
 import '../../router/app_routes.dart';
-import '../../api/api_client.dart';
+import '../../api/deepseek_client.dart';
+import '../../services/storage_service.dart';
 
 /// 烟瘾急救 - AI 短句接管
 ///
@@ -47,14 +48,16 @@ class _CravingRescueScreenState extends State<CravingRescueScreen>
 
   void _fetchMessages() async {
     try {
-      final res = await ApiClient().triggerCravingSOS(_triggerKey!);
+      final profile = StorageService().getProfile();
+      final msgs = await DeepSeekClient().generateCravingMessages(_triggerKey!, profile);
+      
       if (mounted) {
         setState(() {
-          _messages = List<String>.from(res['messages'] ?? []);
+          _messages = msgs;
           if (_messages.isEmpty) {
             _messages = ['深呼吸，承认这份渴望。', '这股冲动只要 90 秒就会过去。', '跟我一起，闭上眼睛。'];
           }
-          _eventId = res['event_id'];
+          _eventId = 'local_event_${DateTime.now().millisecondsSinceEpoch}';
           _isLoading = false;
         });
         _showMessages();

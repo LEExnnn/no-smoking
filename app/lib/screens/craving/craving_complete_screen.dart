@@ -3,7 +3,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/app_theme.dart';
 import '../../router/app_routes.dart';
-import '../../api/api_client.dart';
+import '../../services/storage_service.dart';
 
 /// 烟瘾急救 - 完成反馈页
 ///
@@ -55,19 +55,23 @@ class _CravingCompleteScreenState extends State<CravingCompleteScreen>
   }
 
   void _resolveEvent(String eventId, String outcome) async {
-    try {
-      final res = await ApiClient().resolveCraving(eventId, outcome);
-      if (mounted) {
-        setState(() {
-          _cravingsDefeated = res['cravings_defeated'] ?? 1;
-          _moneySaved = (res['money_saved'] ?? 2.0).toDouble();
-          _isResolving = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isResolving = false);
-      }
+    final storage = StorageService();
+    
+    // 计算一支烟的省钱金额
+    final profile = storage.getProfile();
+    double packPrice = (profile?['pack_price'] ?? 20.0).toDouble();
+    double saved = packPrice / 20.0; // 一包算20支
+    
+    if (outcome == 'resisted') {
+      await storage.addCravingDefeated(saved);
+    }
+    
+    if (mounted) {
+      setState(() {
+        _cravingsDefeated = storage.getCravingsDefeated();
+        _moneySaved = storage.getMoneySaved();
+        _isResolving = false;
+      });
     }
   }
 

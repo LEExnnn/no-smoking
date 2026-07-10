@@ -5,6 +5,7 @@ import '../../theme/app_typography.dart';
 import '../../theme/app_theme.dart';
 import '../../router/app_routes.dart';
 import '../../api/api_client.dart';
+import '../../services/storage_service.dart';
 
 /// 个性化首页
 ///
@@ -38,27 +39,23 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _fetchDashboard() async {
-    try {
-      final data = await ApiClient().getDashboard();
-      if (mounted) {
-        setState(() {
-          if (data['quit_date'] != null) {
-            _quitDate = DateTime.parse(data['quit_date']);
-          }
-          _cravingsDefeated = data['cravings_defeated'] ?? 0;
-          _moneySaved = (data['money_saved'] ?? 0.0).toDouble();
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e.toString();
-          _isLoading = false;
-        });
-      }
+    final storage = StorageService();
+    final qDate = storage.getQuitDate();
+    
+    if (mounted) {
+      setState(() {
+        if (qDate != null) {
+          _quitDate = qDate;
+        } else {
+          _quitDate = DateTime.now();
+        }
+        _cravingsDefeated = storage.getCravingsDefeated();
+        _moneySaved = storage.getMoneySaved();
+        _isLoading = false;
+      });
     }
   }
+
 
   @override
   void dispose() {

@@ -21,8 +21,13 @@ class _ProfileReportScreenState extends State<ProfileReportScreen> {
     final profile = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>? ?? {};
     
     final userTypes = (profile['user_types'] as List<dynamic>?)?.join(' · ') ?? '常规型';
-    final primaryMotivation = profile['primary_motivation'] ?? '健康';
-    final primaryTrigger = profile['primary_trigger'] ?? '压力';
+    
+    final motivations = profile['motivation_weights'] as List<dynamic>? ?? [];
+    final primaryMotivation = motivations.isNotEmpty ? motivations.first.toString() : '健康';
+    
+    final triggers = profile['trigger_weights'] as List<dynamic>? ?? [];
+    final primaryTrigger = triggers.isNotEmpty ? triggers.first.toString() : '压力';
+    
     final beliefTags = (profile['belief_tags'] as List<dynamic>?)?.join(' · ') ?? '暂无明显错误信念';
     final modules = profile['recommended_modules'] as List<dynamic>? ?? ['ai_rescue'];
 

@@ -3,6 +3,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/app_theme.dart';
 import '../../router/app_routes.dart';
+import '../../services/storage_service.dart';
 
 /// 自由日选择页
 ///
@@ -90,12 +91,17 @@ class _QuitDayScreenState extends State<QuitDayScreen> {
                 height: 56,
                 child: ElevatedButton(
                   onPressed: _selected != null
-                      ? () {
-                          Navigator.pushNamedAndRemoveUntil(
-                            context,
-                            AppRoutes.home,
-                            (route) => false,
-                          );
+                      ? () async {
+                          if (_selected != 'observe') {
+                            await StorageService().saveQuitDate(DateTime.now());
+                          }
+                          if (mounted) {
+                            Navigator.pushNamedAndRemoveUntil(
+                              context,
+                              AppRoutes.home,
+                              (route) => false,
+                            );
+                          }
                         }
                       : null,
                   style: ElevatedButton.styleFrom(
