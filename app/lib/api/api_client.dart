@@ -12,8 +12,8 @@ class ApiClient {
 
   ApiClient._internal() {
     dio = Dio(BaseOptions(
-      // Default to 118.113.15.101, interceptor will override this if custom IP is set
-      baseUrl: 'http://118.113.15.101:8000/api/v1',
+      // Default to Mac's local LAN IP, interceptor will override this if custom IP is set
+      baseUrl: 'http://10.0.16.200:8000/api/v1',
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 15),
     ));
