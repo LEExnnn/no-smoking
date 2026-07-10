@@ -9,7 +9,7 @@ class StorageService {
   static const String _keyProfile = 'user_profile';
   static const String _keyQuitDate = 'quit_date';
   static const String _keyCravingsDefeated = 'cravings_defeated';
-  static const String _keyMoneySaved = 'money_saved'; // 累计省下金额
+  static const String _keySlipUps = 'slip_ups'; // 复吸次数
 
   late SharedPreferences _prefs;
 
@@ -44,20 +44,22 @@ class StorageService {
   }
 
   // --- Stats ---
-  Future<void> addCravingDefeated(double moneySavedIncrement) async {
+  Future<void> addCravingDefeated() async {
     int current = _prefs.getInt(_keyCravingsDefeated) ?? 0;
     await _prefs.setInt(_keyCravingsDefeated, current + 1);
-
-    double currentMoney = _prefs.getDouble(_keyMoneySaved) ?? 0.0;
-    await _prefs.setDouble(_keyMoneySaved, currentMoney + moneySavedIncrement);
+  }
+  
+  Future<void> addSlipUp() async {
+    int current = _prefs.getInt(_keySlipUps) ?? 0;
+    await _prefs.setInt(_keySlipUps, current + 1);
   }
 
   int getCravingsDefeated() {
     return _prefs.getInt(_keyCravingsDefeated) ?? 0;
   }
   
-  double getMoneySaved() {
-    return _prefs.getDouble(_keyMoneySaved) ?? 0.0;
+  int getSlipUps() {
+    return _prefs.getInt(_keySlipUps) ?? 0;
   }
 
   // 清除所有数据（用于重新测试）

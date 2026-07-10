@@ -254,27 +254,50 @@ class _CravingTimerScreenState extends State<CravingTimerScreen>
                   Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: AppTheme.spacingXl),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {
-                              // 重新开始
-                              setState(() {
-                                _remainingSeconds = _totalSeconds;
-                                _smokeController.forward(from: 0);
-                              });
-                            },
-                            child: const Text('重新开始'),
+                        ElevatedButton(
+                          onPressed: _onCompleted,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
                           ),
+                          child: const Text('我已经挺过去了', style: TextStyle(fontSize: 16)),
                         ),
-                        const SizedBox(width: AppTheme.spacingMd),
-                        Expanded(
-                          flex: 2,
-                          child: ElevatedButton(
-                            onPressed: _onCompleted,
-                            child: const Text('我已经过去了'),
-                          ),
+                        const SizedBox(height: AppTheme.spacingMd),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _remainingSeconds = _totalSeconds;
+                                    _smokeController.forward(from: 0);
+                                  });
+                                },
+                                child: const Text('重新开始倒计时'),
+                              ),
+                            ),
+                            const SizedBox(width: AppTheme.spacingMd),
+                            Expanded(
+                              child: TextButton(
+                                onPressed: () {
+                                  Navigator.pushReplacementNamed(
+                                    context,
+                                    AppRoutes.cravingComplete,
+                                    arguments: {
+                                      'event_id': _eventId,
+                                      'outcome': 'relapsed',
+                                    },
+                                  );
+                                },
+                                style: TextButton.styleFrom(
+                                  foregroundColor: AppColors.textTertiary,
+                                ),
+                                child: const Text('不行我忍不住了'),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

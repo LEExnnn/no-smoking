@@ -21,9 +21,19 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   // 模拟数据 - 后续对接 API
   late Timer _timer;
+  late Timer _quoteTimer;
   DateTime _quitDate = DateTime.now().subtract(const Duration(days: 2, hours: 8, minutes: 35));
   int _cravingsDefeated = 7;
   double _moneySaved = 48.0;
+  
+  final List<String> _quotes = [
+    "“你不需要放弃任何东西，你只是在挣脱牢笼”",
+    "“吸烟并不能填补空虚，它正是造成空虚的罪魁祸首”",
+    "“你不是在戒烟，你是在成为一个不吸烟的人”",
+    "“停止吸烟不需要意志力，只需要看清真相”",
+    "“每一口烟都在向毒瘾妥协，今天，你赢了”",
+  ];
+  int _currentQuoteIndex = 0;
 
   bool _isLoading = true;
   String _error = '';
@@ -35,6 +45,14 @@ class _HomeScreenState extends State<HomeScreen> {
     // 实时更新自由时间
     _timer = Timer.periodic(const Duration(seconds: 60), (_) {
       if (mounted) setState(() {});
+    });
+    // 跑马灯定时器
+    _quoteTimer = Timer.periodic(const Duration(seconds: 8), (_) {
+      if (mounted) {
+        setState(() {
+          _currentQuoteIndex = (_currentQuoteIndex + 1) % _quotes.length;
+        });
+      }
     });
   }
 
@@ -50,7 +68,21 @@ class _HomeScreenState extends State<HomeScreen> {
           _quitDate = DateTime.now();
         }
         _cravingsDefeated = storage.getCravingsDefeated();
-        _moneySaved = storage.getMoneySaved();
+        
+        // 动态计算资金
+        final profile = storage.getProfile();
+        int cigsPerDay = profile?['cigarettes_per_day'] as int? ?? 10;
+        double packPrice = (profile?['pack_price'] ?? 20.0).toDouble();
+        int slipUps = storage.getSlipUps();
+        
+        double daysElapsed = DateTime.now().difference(_quitDate).inSeconds / (24 * 3600);
+        if (daysElapsed < 0) daysElapsed = 0;
+        
+        double savedCigs = (daysElapsed * cigsPerDay) - slipUps;
+        if (savedCigs < 0) savedCigs = 0;
+        
+        _moneySaved = savedCigs * (packPrice / 20.0);
+        
         _isLoading = false;
       });
     }
@@ -60,6 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _timer.cancel();
+    _quoteTimer.cancel();
     super.dispose();
   }
 
@@ -106,6 +139,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                   ),
+
+                  const SizedBox(height: AppTheme.spacingMd),
+                  
+                  // ─── 理念强化跑马灯 ────────────────────────
+                  _buildQuoteCarousel(),
 
                   const SizedBox(height: AppTheme.spacingLg),
 
@@ -464,43 +502,77 @@ class _HomeScreenState extends State<HomeScreen> {
   /// 底部常驻"我想抽了"按钮
   Widget _buildCravingButton(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(
-        AppTheme.spacingXl,
-        AppTheme.spacingMd,
-        AppTheme.spacingXl,
-        AppTheme.spacingLg,
-      ),
+      padding: const EdgeInsets.all(AppTheme.spacingXl),
       decoration: BoxDecoration(
-        color: AppColors.background,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -4),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            AppColors.background.withValues(alpha: 0.0),
+            AppColors.background,
+          ],
+          stops: const [0.0, 0.3],
+        ),
+      ),
+      child: ElevatedButton(
+        onPressed: () {
+          Navigator.pushNamed(context, AppRoutes.cravingTrigger);
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.danger,
+          foregroundColor: Colors.white,
+          minimumSize: const Size(double.infinity, 56),
+          elevation: 4,
+        ),
+        child: const Text(
+          '不行，我想抽了',
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuoteCarousel() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd, vertical: AppTheme.spacingSm),
+      decoration: BoxDecoration(
+        color: AppColors.primarySurface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.format_quote_rounded, color: AppColors.primary, size: 20),
+          const SizedBox(width: AppTheme.spacingSm),
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 800),
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0.0, 0.2),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                );
+              },
+              child: Text(
+                _quotes[_currentQuoteIndex],
+                key: ValueKey<int>(_currentQuoteIndex),
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.primaryDark,
+                  fontStyle: FontStyle.italic,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ),
         ],
-      ),
-      child: SizedBox(
-        width: double.infinity,
-        height: 56,
-        child: ElevatedButton.icon(
-          onPressed: () {
-            Navigator.pushNamed(context, AppRoutes.cravingTrigger);
-          },
-          icon: const Icon(Icons.local_fire_department_rounded, size: 22),
-          label: const Text(
-            '我想抽了',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppTheme.radiusXxl),
-            ),
-            elevation: 2,
-          ),
-        ),
       ),
     );
   }

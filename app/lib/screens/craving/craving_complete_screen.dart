@@ -21,8 +21,8 @@ class _CravingCompleteScreenState extends State<CravingCompleteScreen>
   late AnimationController _controller;
   
   bool _isResolving = true;
-  int _cravingsDefeated = 1;
-  double _moneySaved = 2.0;
+  bool _isRelapsed = false;
+  int _cravingsDefeated = 0;
   bool _resolved = false;
 
   @override
@@ -57,19 +57,16 @@ class _CravingCompleteScreenState extends State<CravingCompleteScreen>
   void _resolveEvent(String eventId, String outcome) async {
     final storage = StorageService();
     
-    // 计算一支烟的省钱金额
-    final profile = storage.getProfile();
-    double packPrice = (profile?['pack_price'] ?? 20.0).toDouble();
-    double saved = packPrice / 20.0; // 一包算20支
-    
     if (outcome == 'resisted') {
-      await storage.addCravingDefeated(saved);
+      await storage.addCravingDefeated();
+    } else if (outcome == 'relapsed') {
+      await storage.addSlipUp();
+      _isRelapsed = true;
     }
     
     if (mounted) {
       setState(() {
         _cravingsDefeated = storage.getCravingsDefeated();
-        _moneySaved = storage.getMoneySaved();
         _isResolving = false;
       });
     }
@@ -108,9 +105,9 @@ class _CravingCompleteScreenState extends State<CravingCompleteScreen>
               _buildAnimated(
                 delay: 0.2,
                 child: Text(
-                  '这次你没有喂它',
+                  _isRelapsed ? '没关系，原谅自己' : '这次你没有喂它',
                   style: AppTypography.headlineLarge.copyWith(
-                    color: AppColors.primary,
+                    color: _isRelapsed ? AppColors.textPrimary : AppColors.primary,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -119,7 +116,7 @@ class _CravingCompleteScreenState extends State<CravingCompleteScreen>
               _buildAnimated(
                 delay: 0.3,
                 child: Text(
-                  '它下次会弱一点',
+                  _isRelapsed ? '一根烟不代表全面失败，这只是漫长旅途中的一个小跟头。' : '它下次会弱一点',
                   style: AppTypography.bodyLarge.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -130,31 +127,30 @@ class _CravingCompleteScreenState extends State<CravingCompleteScreen>
               const SizedBox(height: AppTheme.spacingXxl),
 
               // 收益可视化
-              _buildAnimated(
-                delay: 0.4,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(AppTheme.spacingXl),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-                    boxShadow: AppTheme.shadowSm,
-                  ),
-                  child: Column(
-                    children: [
-                      _buildRewardRow('🛡️', '累计击退烟瘾', '$_cravingsDefeated 次'),
-                      const Divider(height: 24),
-                      _buildRewardRow('🚭', '本次少抽', '1 支'),
-                      const Divider(height: 24),
-                      _buildRewardRow('💰', '累计省下约', '¥${_moneySaved.toStringAsFixed(1)}'),
-                      const Divider(height: 24),
-                      _buildRewardRow('👶', '宝宝无烟账户', '+1'),
-                      const Divider(height: 24),
-                      _buildRewardRow('🏠', '回家少一次烟味风险', '✓'),
-                    ],
+              if (!_isRelapsed)
+                _buildAnimated(
+                  delay: 0.4,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(AppTheme.spacingXl),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                      boxShadow: AppTheme.shadowSm,
+                    ),
+                    child: Column(
+                      children: [
+                        _buildRewardRow('🛡️', '累计击退烟瘾', '$_cravingsDefeated 次'),
+                        const Divider(height: 24),
+                        _buildRewardRow('🚭', '本次少抽', '1 支'),
+                        const Divider(height: 24),
+                        _buildRewardRow('👶', '宝宝无烟账户', '+1'),
+                        const Divider(height: 24),
+                        _buildRewardRow('🏠', '回家少一次烟味风险', '✓'),
+                      ],
+                    ),
                   ),
                 ),
-              ),
 
               const Spacer(flex: 2),
 
@@ -204,8 +200,9 @@ class _CravingCompleteScreenState extends State<CravingCompleteScreen>
               height: 100,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: AppColors.primaryGradient,
-                boxShadow: [
+                gradient: _isRelapsed ? null : AppColors.primaryGradient,
+                color: _isRelapsed ? AppColors.surfaceVariant : null,
+                boxShadow: _isRelapsed ? null : [
                   BoxShadow(
                     color: AppColors.primary.withValues(alpha: 0.3),
                     blurRadius: 20,
@@ -213,9 +210,9 @@ class _CravingCompleteScreenState extends State<CravingCompleteScreen>
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.check_rounded,
-                color: Colors.white,
+              child: Icon(
+                _isRelapsed ? Icons.favorite_border_rounded : Icons.check_rounded,
+                color: _isRelapsed ? AppColors.textSecondary : Colors.white,
                 size: 48,
               ),
             ),
