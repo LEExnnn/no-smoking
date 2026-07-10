@@ -42,9 +42,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _fetchDashboard();
-    // 实时更新自由时间
-    _timer = Timer.periodic(const Duration(seconds: 60), (_) {
-      if (mounted) setState(() {});
+    // 实时更新时间与资金
+    _timer = Timer.periodic(const Duration(seconds: 10), (_) {
+      if (mounted) _updateDynamicStats();
     });
     // 跑马灯定时器
     _quoteTimer = Timer.periodic(const Duration(seconds: 8), (_) {
@@ -53,6 +53,30 @@ class _HomeScreenState extends State<HomeScreen> {
           _currentQuoteIndex = (_currentQuoteIndex + 1) % _quotes.length;
         });
       }
+    });
+  }
+  
+  void _updateDynamicStats() {
+    final storage = StorageService();
+    final profile = storage.getProfile();
+    int cigsPerDay = profile?['cigarettes_per_day'] as int? ?? 10;
+    double packPrice = (profile?['pack_price'] ?? 20.0).toDouble();
+    int slipUps = storage.getSlipUps();
+    int defeated = storage.getCravingsDefeated();
+    
+    double daysElapsed = DateTime.now().difference(_quitDate).inSeconds / (24 * 3600);
+    if (daysElapsed < 0) daysElapsed = 0;
+    
+    double savedCigs = (daysElapsed * cigsPerDay) - slipUps;
+    if (savedCigs < 0) savedCigs = 0;
+    
+    // 核心修改：被动滚雪球（基于时间） + 主动奖励（每次击退奖励1根烟的钱）
+    double passiveMoney = savedCigs * (packPrice / 20.0);
+    double activeBonus = defeated * (packPrice / 20.0);
+    
+    setState(() {
+      _cravingsDefeated = defeated;
+      _moneySaved = passiveMoney + activeBonus;
     });
   }
 
@@ -67,22 +91,9 @@ class _HomeScreenState extends State<HomeScreen> {
         } else {
           _quitDate = DateTime.now();
         }
-        _cravingsDefeated = storage.getCravingsDefeated();
-        
-        // 动态计算资金
-        final profile = storage.getProfile();
-        int cigsPerDay = profile?['cigarettes_per_day'] as int? ?? 10;
-        double packPrice = (profile?['pack_price'] ?? 20.0).toDouble();
-        int slipUps = storage.getSlipUps();
-        
-        double daysElapsed = DateTime.now().difference(_quitDate).inSeconds / (24 * 3600);
-        if (daysElapsed < 0) daysElapsed = 0;
-        
-        double savedCigs = (daysElapsed * cigsPerDay) - slipUps;
-        if (savedCigs < 0) savedCigs = 0;
-        
-        _moneySaved = savedCigs * (packPrice / 20.0);
-        
+      });
+      _updateDynamicStats();
+      setState(() {
         _isLoading = false;
       });
     }
